@@ -1,0 +1,80 @@
+/* Match ResearchPad UI color palette */
+
+/* Dark grey header, cyan for accents/links/buttons */
+:root {
+  --md-primary-fg-color: #1e1e2e;
+  --md-primary-fg-color--light: #2a2a3a;
+  --md-primary-fg-color--dark: #151521;
+  --md-accent-fg-color: #0891b2;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #111118;
+  --md-primary-fg-color--light: #1a1a26;
+  --md-primary-fg-color--dark: #0a0a0f;
+  --md-accent-fg-color: #00d4ff;
+  --md-default-bg-color: #0f1117;
+  --md-default-bg-color--light: #161822;
+}
+
+/* Ensure links and interactive elements use cyan */
+.md-typeset a {
+  color: var(--md-accent-fg-color);
+}
+
+.md-typeset a:hover {
+  color: var(--md-accent-fg-color);
+  opacity: 0.85;
+}
+
+/* Nav tabs use cyan for active state */
+.md-tabs__link--active,
+.md-tabs__link:hover {
+  color: var(--md-accent-fg-color) !important;
+}
+
+/* Hero styling */
+.md-typeset .hero {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.md-typeset .hero h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.md-typeset .hero p.subtitle {
+  font-size: 1.2rem;
+  opacity: 0.8;
+  margin-bottom: 1.5rem;
+}
+
+/* Feature grid */
+.md-typeset .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.md-typeset .grid .card {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: box-shadow 0.2s;
+}
+
+.md-typeset .grid .card:hover {
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.1);
+}
+
+.md-typeset .grid .card h3 {
+  margin-top: 0;
+}
+
+/* Code block enhancements */
+.highlight pre {
+  border-radius: 8px;
+}

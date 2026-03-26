@@ -1,0 +1,6 @@
+include README.md
+include LICENSE
+recursive-include researchpad/server *
+recursive-include researchpad/templates *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
