@@ -14,6 +14,11 @@ def main():
     # researchpad init
     init_parser = subparsers.add_parser("init", help="Initialize ResearchPad in current project")
     init_parser.add_argument("--force", action="store_true", help="Overwrite existing files")
+    init_parser.add_argument(
+        "--target", choices=["cursor", "claude", "all"],
+        default=None,
+        help="Which tool to install commands for (default: auto-detect)",
+    )
 
     # researchpad runserver
     server_parser = subparsers.add_parser("runserver", help="Start the ResearchPad UI server")
@@ -30,7 +35,7 @@ def main():
         sys.exit(1)
     elif args.command == "init":
         from researchpad.cli.init import init_command
-        init_command(force=args.force)
+        init_command(force=args.force, target=args.target)
     elif args.command == "runserver":
         from researchpad.cli.runserver import runserver_command
         runserver_command(args.bind)

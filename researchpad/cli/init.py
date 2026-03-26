@@ -2,26 +2,71 @@
 import shutil
 from pathlib import Path
 
+# Supported tools and their command directories
+TOOLS = {
+    "cursor": ".cursor/commands",
+    "claude": ".claude/commands",
+}
 
-def init_command(force=False):
-    """Install cursor commands and create .researchpad/ directory structure."""
+
+def _detect_targets(project_root):
+    """Auto-detect which AI coding tools are in use by checking for their config dirs."""
+    detected = []
+    for tool, cmd_path in TOOLS.items():
+        tool_dir = project_root / cmd_path.split("/")[0]
+        if tool_dir.exists():
+            detected.append(tool)
+    return detected
+
+
+def _install_commands(project_root, templates_dir, tool, force):
+    """Install command templates for a specific tool."""
+    src_commands = templates_dir / "commands"
+    dst_path = TOOLS[tool]
+    dst_commands = project_root / dst_path
+
+    if not src_commands.exists():
+        return
+
+    if dst_commands.exists() and not force:
+        print(f"  {dst_path}/ already exists. Use --force to overwrite.")
+        return
+
+    dst_commands.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(src_commands, dst_commands, dirs_exist_ok=True)
+
+    # Remove .gitkeep files from installed commands
+    for gitkeep in dst_commands.glob(".gitkeep"):
+        gitkeep.unlink()
+
+    print(f"  Installed commands to {dst_path}/")
+
+
+def init_command(force=False, target=None):
+    """Install commands and create .researchpad/ directory structure."""
     project_root = Path.cwd()
     package_dir = Path(__file__).parent.parent
     templates_dir = package_dir / "templates"
 
-    # Install cursor commands
-    cursor_dir = project_root / ".cursor"
-    cursor_dir.mkdir(exist_ok=True)
-
-    src_commands = templates_dir / "cursor" / "commands"
-    dst_commands = cursor_dir / "commands"
-
-    if src_commands.exists():
-        if dst_commands.exists() and not force:
-            print(f"  .cursor/commands/ already exists. Use --force to overwrite.")
+    # Determine which tools to install for
+    if target == "all":
+        targets = list(TOOLS.keys())
+    elif target is not None:
+        targets = [target]
+    else:
+        # Auto-detect
+        targets = _detect_targets(project_root)
+        if not targets:
+            # Nothing detected -- install for both
+            targets = list(TOOLS.keys())
+            print("  No existing .cursor/ or .claude/ directory detected, installing for both.")
         else:
-            shutil.copytree(src_commands, dst_commands, dirs_exist_ok=True)
-            print(f"  Installed cursor commands to .cursor/commands/")
+            detected_names = ", ".join(t.capitalize() for t in targets)
+            print(f"  Detected: {detected_names}")
+
+    # Install commands for each target
+    for tool in targets:
+        _install_commands(project_root, templates_dir, tool, force)
 
     # Create .researchpad directory structure
     researchpad_dir = project_root / ".researchpad"
@@ -39,4 +84,4 @@ def init_command(force=False):
     print("\nNext steps:")
     print("  1. Run: researchpad runserver")
     print("  2. Open: http://localhost:8888")
-    print("  3. Use cursor commands: /research, /experiment, /debug")
+    print("  3. Use commands: /research, /experiment, /debug")
