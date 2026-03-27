@@ -8,10 +8,18 @@ ResearchPad provides a web UI and cursor commands for running iterative ML exper
 
 ```bash
 pip install researchpad
-researchpad init
-researchpad runserver
-# Open http://localhost:8888
+researchpad init          # creates RESEARCHPAD.md + cursor/claude commands
+researchpad runserver     # open http://localhost:8888
 ```
+
+Then ask your AI agent to run an experiment:
+
+**Cursor/Claude Code:**
+```
+Can you run an /experiment to improve the SMAPE metrics of our demand forecaster?
+```
+
+The agent reads your `RESEARCHPAD.md` config, runs your pipeline, tracks metrics, and iterates autonomously -- keeping changes that improve results and reverting those that don't.
 
 ## Features
 
@@ -24,7 +32,7 @@ researchpad runserver
 - **Live Updates** -- WebSocket-based real-time refresh
 - **Keyboard Shortcuts** -- Press `?` for the full list
 
-## Cursor Commands
+## Commands
 
 | Command | Description |
 |---------|-------------|
