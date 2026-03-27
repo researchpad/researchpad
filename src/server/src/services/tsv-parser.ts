@@ -21,10 +21,19 @@ const RESERVED_COLUMNS = new Set([
   "duration_s",
   "duration_seconds",
   "run_id",
-  "run_folder",
+  "output_path",
   "branch",
   "parent_experiment",
 ]);
+
+export function parseMetricDirection(rawColumnName: string): { name: string; direction: "minimize" | "maximize" | "zero" } {
+  if (rawColumnName.startsWith("-")) return { name: rawColumnName.slice(1), direction: "minimize" };
+  if (rawColumnName.startsWith("+")) return { name: rawColumnName.slice(1), direction: "maximize" };
+  if (rawColumnName.startsWith("~")) return { name: rawColumnName.slice(1), direction: "zero" };
+  return { name: rawColumnName, direction: "minimize" };
+}
+
+const metricDirectionMap: Record<string, "minimize" | "maximize" | "zero"> = {};
 
 function tryParseNumber(val: string): number | null {
   if (!val || val === "-" || val === "nan" || val === "NaN" || val === "") return null;
@@ -45,7 +54,9 @@ export async function parseExperimentLog(filePath: string): Promise<Experiment[]
   if (records.length === 0) return [];
 
   const allColumns = Object.keys(records[0]);
-  const metricColumns = allColumns.filter((col) => {
+  const metricColumnsRaw = allColumns.filter((col) => {
+    const parsed = parseMetricDirection(col);
+    if (RESERVED_COLUMNS.has(parsed.name)) return false;
     if (RESERVED_COLUMNS.has(col)) return false;
     const hasNumeric = records.some((r) => {
       const v = r[col]?.trim();
@@ -54,10 +65,18 @@ export async function parseExperimentLog(filePath: string): Promise<Experiment[]
     return hasNumeric;
   });
 
+  // Build mapping from raw column name to clean name + direction
+  const columnMapping: { raw: string; clean: string; direction: "minimize" | "maximize" | "zero" }[] = [];
+  for (const raw of metricColumnsRaw) {
+    const { name, direction } = parseMetricDirection(raw);
+    columnMapping.push({ raw, clean: name, direction });
+    metricDirectionMap[name] = direction;
+  }
+
   return records.map((row) => {
     const metrics: Record<string, number | null> = {};
-    for (const col of metricColumns) {
-      metrics[col] = tryParseNumber(row[col] ?? "");
+    for (const { raw, clean } of columnMapping) {
+      metrics[clean] = tryParseNumber(row[raw] ?? "");
     }
 
     const durationRaw = row["duration_s"] ?? row["duration_seconds"] ?? "";
@@ -70,7 +89,7 @@ export async function parseExperimentLog(filePath: string): Promise<Experiment[]
       commit: row["commit"]?.trim() || null,
       duration_seconds: tryParseNumber(durationRaw),
       metrics,
-      run_folder: row["run_folder"] ?? null,
+      output_path: row["output_path"] ?? null,
       branch: row["branch"] ?? null,
     };
   });
@@ -85,6 +104,7 @@ export function discoverMetricColumns(experiments: Experiment[]): string[] {
 export interface MetricHint {
   likely_pct: boolean;
   is_count: boolean;
+  direction: "minimize" | "maximize" | "zero";
 }
 
 export function computeMetricHints(
@@ -107,6 +127,7 @@ export function computeMetricHints(
     hints[col] = {
       likely_pct: allBetween01 && !allIntegers,
       is_count: allIntegers && hasLargeValues,
+      direction: metricDirectionMap[col] ?? "minimize",
     };
   }
 

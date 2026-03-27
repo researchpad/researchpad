@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { useCompare } from "@/hooks/use-experiment-detail";
-import { formatMetric, formatDelta, formatDuration, metricFormatOpts, cn } from "@/lib/utils";
+import { formatMetric, formatDelta, formatDuration, metricFormatOpts, deltaColorClass, bestValue, cn } from "@/lib/utils";
 
 export function ExperimentComparePage() {
   const search = useSearch({ strict: false }) as Record<string, string>;
@@ -138,7 +138,8 @@ export function ExperimentComparePage() {
             {metric_columns.map((col) => {
               const opts = metricFormatOpts(metric_hints, col);
               const values = experiments.map((e) => e.metrics[col]).filter((v): v is number => v != null);
-              const best = values.length > 0 ? Math.min(...values) : null;
+              const direction = metricFormatOpts(metric_hints, col).direction;
+              const best = bestValue(values, direction);
 
               return (
                 <tr key={col} className="border-b border-border-subtle">
@@ -164,7 +165,7 @@ export function ExperimentComparePage() {
                           <div
                             className={cn(
                               "text-xs",
-                              delta < 0 ? "text-accent-emerald" : delta > 0 ? "text-accent-red" : "text-text-muted"
+                              deltaColorClass(delta, direction)
                             )}
                           >
                             {formatDelta(delta, { pct: opts.pct })}

@@ -97,7 +97,7 @@ debugRouter.get("/debug/:slug/prompt", async (c) => {
     const date = rawDate instanceof Date
       ? rawDate.toISOString().split("T")[0]
       : String(rawDate ?? "unknown date");
-    const loop = String(artifact.frontmatter.loop ?? "forecaster");
+    const loop = String(artifact.frontmatter.loop ?? "default");
 
     const suggestedLines = artifact.content
       .split("\n")

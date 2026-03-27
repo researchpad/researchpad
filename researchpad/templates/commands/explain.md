@@ -7,7 +7,7 @@ arguments:
   - name: commit
     description: The git commit hash for the experiment
     required: true
-  - name: run_folder
+  - name: output_path
     description: Path to the run's evaluation artifacts (e.g., data/2026-03-17T19:54:56/forecaster)
     required: false
 ---
@@ -21,7 +21,7 @@ a detailed narrative explanation of what was tried, why, and what happened.
 
 1. Read the experiment log entry:
    ```
-   grep "$experiment_id" experiment_log.tsv
+   grep "$experiment_id" .researchpad/experiment_log.tsv
    ```
 
 2. Get the commit summary:
@@ -34,7 +34,7 @@ a detailed narrative explanation of what was tried, why, and what happened.
    git diff $commit~1..$commit
    ```
 
-4. If a `run_folder` was provided (`$run_folder`), list and review the
+4. If an `output_path` was provided (`$output_path`), list and review the
    evaluation artifacts in that directory to understand metric breakdowns.
 
 ## Step 2: Analyze

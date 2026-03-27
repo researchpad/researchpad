@@ -1,5 +1,5 @@
 import { StatusBadge } from "@/components/ui/badge";
-import { formatMetric, formatDelta, formatDuration, relativeTime, metricFormatOpts } from "@/lib/utils";
+import { formatMetric, formatDelta, formatDuration, relativeTime, metricFormatOpts, deltaColorClass } from "@/lib/utils";
 import type { Experiment, MetricHint } from "@/lib/types";
 
 interface MetricHeaderProps {
@@ -63,7 +63,7 @@ export function MetricHeader({ experiment, baseline, metricColumns, metricHints 
               {delta !== null && (
                 <p
                   className={`mt-1 font-mono text-sm ${
-                    delta < 0 ? "text-accent-emerald" : delta > 0 ? "text-accent-red" : "text-text-muted"
+                    deltaColorClass(delta, metricFormatOpts(metricHints, col).direction)
                   }`}
                 >
                   {formatDelta(delta, { pct: opts.pct })} vs baseline

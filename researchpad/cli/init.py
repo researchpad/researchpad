@@ -68,6 +68,16 @@ def init_command(force=False, target=None):
     for tool in targets:
         _install_commands(project_root, templates_dir, tool, force)
 
+    # Copy RESEARCHPAD.md to project root
+    researchpad_md_src = templates_dir / "RESEARCHPAD.md"
+    researchpad_md_dst = project_root / "RESEARCHPAD.md"
+    if researchpad_md_src.exists():
+        if researchpad_md_dst.exists() and not force:
+            print("  RESEARCHPAD.md already exists. Use --force to overwrite.")
+        else:
+            shutil.copy2(researchpad_md_src, researchpad_md_dst)
+            print("  Created RESEARCHPAD.md -- edit this to configure your project")
+
     # Create .researchpad directory structure
     researchpad_dir = project_root / ".researchpad"
     researchpad_dir.mkdir(exist_ok=True)
@@ -82,6 +92,7 @@ def init_command(force=False, target=None):
 
     print("\nResearchPad initialized successfully!")
     print("\nNext steps:")
-    print("  1. Run: researchpad runserver")
-    print("  2. Open: http://localhost:8888")
-    print("  3. Use commands: /research, /experiment, /debug")
+    print("  1. Edit RESEARCHPAD.md to configure your project")
+    print("  2. Run: researchpad runserver")
+    print("  3. Open: http://localhost:8888")
+    print("  4. Use commands: /research, /experiment, /debug")

@@ -97,3 +97,18 @@ def test_init_target_all():
             assert Path(".claude/commands").exists()
     finally:
         os.chdir(original_dir)
+
+
+def test_init_creates_researchpad_md():
+    original_dir = os.getcwd()
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.chdir(tmpdir)
+            init_command()
+            assert Path("RESEARCHPAD.md").exists()
+            content = Path("RESEARCHPAD.md").read_text()
+            assert "ResearchPad Configuration" in content
+            assert "Frozen Paths" in content
+            assert "Evaluation Integrity" in content
+    finally:
+        os.chdir(original_dir)

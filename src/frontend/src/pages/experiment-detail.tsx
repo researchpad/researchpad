@@ -25,7 +25,7 @@ export function ExperimentDetailPage() {
   );
   const { data: evalData } = useEvalFiles(
     experimentId,
-    !!experiment?.run_folder
+    !!experiment?.output_path
   );
   const { data: explainData } = useExplainCommand(experimentId);
 

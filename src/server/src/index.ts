@@ -128,7 +128,7 @@ const server = serve({ fetch: app.fetch, hostname: host, port }, (info) => {
   } else {
     console.log(`  Warning: RESEARCHPAD_STORAGE_ROOT not set — eval artifact paths may not resolve`);
   }
-  console.log(`  Watching: experiment_log*.tsv, .researchpad/experiments/{research,debug}/\n`);
+  console.log(`  Watching: .researchpad/experiment_log*.tsv, .researchpad/experiments/{research,debug}/\n`);
 });
 
 injectWebSocket(server);

@@ -15,9 +15,9 @@ export const experimentsRouter = new Hono();
 
 function resolveLoopFile(loopLabel?: string): string {
   if (!loopLabel || loopLabel === "default") {
-    return path.join(projectRoot, "experiment_log.tsv");
+    return path.join(projectRoot, ".researchpad", "experiment_log.tsv");
   }
-  return path.join(projectRoot, `experiment_log.${loopLabel}.tsv`);
+  return path.join(projectRoot, ".researchpad", `experiment_log.${loopLabel}.tsv`);
 }
 
 async function loadExperiments(loopLabel?: string): Promise<Experiment[]> {
@@ -61,18 +61,26 @@ experimentsRouter.get("/experiments/summary", async (c) => {
   const baselines = experiments.filter((e) => e.status === "baseline");
   const baseline = baselines[0] ?? null;
 
+  const metricHints = computeMetricHints(experiments, metricColumns);
+
   const bestMetrics: Record<string, { value: number; experiment_id: string }> = {};
   for (const col of metricColumns) {
     let best: { value: number; experiment_id: string } | null = null;
+    const dir = metricHints[col]?.direction ?? "minimize";
     for (const e of kept) {
       const v = e.metrics[col];
       if (v === null) continue;
-      const absVal = col.toLowerCase().includes("bias") ? Math.abs(v) : v;
-      if (
-        best === null ||
-        absVal <
-          (col.toLowerCase().includes("bias") ? Math.abs(best.value) : best.value)
-      ) {
+      if (best === null) {
+        best = { value: v, experiment_id: e.experiment_id };
+        continue;
+      }
+      let isBetter = false;
+      switch (dir) {
+        case "minimize": isBetter = v < best.value; break;
+        case "maximize": isBetter = v > best.value; break;
+        case "zero": isBetter = Math.abs(v) < Math.abs(best.value); break;
+      }
+      if (isBetter) {
         best = { value: v, experiment_id: e.experiment_id };
       }
     }
@@ -94,13 +102,20 @@ experimentsRouter.get("/experiments/summary", async (c) => {
     null;
   if (metricColumns.length > 0 && baseline) {
     const primaryMetric = metricColumns[0];
+    const pmDir = metricHints[primaryMetric]?.direction ?? "minimize";
     let bestDelta = 0;
     for (const e of nonBaseline) {
       const v = e.metrics[primaryMetric];
       const base = baseline.metrics[primaryMetric];
       if (v == null || base == null) continue;
       const delta = v - base;
-      if (delta < bestDelta) {
+      let isBetter = false;
+      switch (pmDir) {
+        case "minimize": isBetter = delta < bestDelta; break;
+        case "maximize": isBetter = delta > bestDelta; break;
+        case "zero": isBetter = Math.abs(v) < Math.abs(base) && Math.abs(delta) > Math.abs(bestDelta); break;
+      }
+      if (isBetter) {
         bestDelta = delta;
         mostImpactful = {
           experiment_id: e.experiment_id,
@@ -140,7 +155,7 @@ experimentsRouter.get("/experiments/summary", async (c) => {
       avg_duration: Math.round(avgDuration),
     },
     metric_columns: metricColumns,
-    metric_hints: computeMetricHints(experiments, metricColumns),
+    metric_hints: metricHints,
   });
 });
 
@@ -239,16 +254,16 @@ experimentsRouter.get("/experiments/:id/diff", async (c) => {
 });
 
 /**
- * Resolve a run_folder value from the TSV to an absolute path on disk.
- * Uses RESEARCHPAD_STORAGE_ROOT (passed from the Python CLI) as the base
+ * Resolve an output_path value from the TSV to an absolute path on disk.
+ * Uses the configured storage root (passed from the Python CLI) as the base
  * directory. Falls back to projectRoot if storageRoot is not available.
  */
-function resolveRunFolderPath(runFolder: string): string | null {
+function resolveOutputPath(outputPath: string): string | null {
   if (storageRoot) {
-    const resolved = path.join(storageRoot, runFolder);
+    const resolved = path.join(storageRoot, outputPath);
     if (fs.existsSync(resolved)) return resolved;
   }
-  const fallback = path.join(projectRoot, runFolder);
+  const fallback = path.join(projectRoot, outputPath);
   if (fs.existsSync(fallback)) return fallback;
   return null;
 }
@@ -260,11 +275,11 @@ experimentsRouter.get("/experiments/:id/eval", async (c) => {
   const experiment = experiments.find((e) => e.experiment_id === id);
   if (!experiment) return c.json({ error: "Not found" }, 404);
 
-  const runFolder = (experiment as Record<string, unknown>).run_folder as string | null;
-  if (!runFolder) return c.json({ files: [], eval_dir: null });
+  const outputPath = (experiment as Record<string, unknown>).output_path as string | null;
+  if (!outputPath) return c.json({ files: [], eval_dir: null });
 
-  const evalDir = resolveRunFolderPath(runFolder);
-  if (!evalDir) return c.json({ files: [], eval_dir: runFolder, dir_missing: true });
+  const evalDir = resolveOutputPath(outputPath);
+  if (!evalDir) return c.json({ files: [], eval_dir: outputPath, dir_missing: true });
 
   const allFiles = walkDir(evalDir);
   const evalFiles = allFiles
@@ -278,7 +293,7 @@ experimentsRouter.get("/experiments/:id/eval", async (c) => {
       };
     });
 
-  return c.json({ files: evalFiles, eval_dir: runFolder });
+  return c.json({ files: evalFiles, eval_dir: outputPath });
 });
 
 experimentsRouter.get("/experiments/:id/eval/:filename{.+}", async (c) => {
@@ -289,11 +304,11 @@ experimentsRouter.get("/experiments/:id/eval/:filename{.+}", async (c) => {
   const experiment = experiments.find((e) => e.experiment_id === id);
   if (!experiment) return c.json({ error: "Not found" }, 404);
 
-  const runFolder = (experiment as Record<string, unknown>).run_folder as string | null;
-  if (!runFolder) return c.json({ error: "No run folder" }, 404);
+  const outputPath = (experiment as Record<string, unknown>).output_path as string | null;
+  if (!outputPath) return c.json({ error: "No output path" }, 404);
 
-  const resolvedDir = resolveRunFolderPath(runFolder);
-  if (!resolvedDir) return c.json({ error: "Run folder not found on disk" }, 404);
+  const resolvedDir = resolveOutputPath(outputPath);
+  if (!resolvedDir) return c.json({ error: "Output path not found on disk" }, 404);
 
   const filePath = path.join(resolvedDir, filename);
   const normalizedPath = path.normalize(filePath);
@@ -337,9 +352,9 @@ experimentsRouter.get("/experiments/:id/explain-command", async (c) => {
   if (experiment.commit) {
     parts.push(`commit=${experiment.commit}`);
   }
-  const runFolder = (experiment as Record<string, unknown>).run_folder as string | null;
-  if (runFolder) {
-    parts.push(`run_folder=${runFolder}`);
+  const outputPath = (experiment as Record<string, unknown>).output_path as string | null;
+  if (outputPath) {
+    parts.push(`output_path=${outputPath}`);
   }
 
   return c.json({ command: parts.join(" ") });

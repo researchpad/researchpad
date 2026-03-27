@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { useSummary } from "@/hooks/use-experiments";
-import { formatMetric, formatDelta, formatDuration, metricFormatOpts, cn } from "@/lib/utils";
+import { formatMetric, formatDelta, formatDuration, metricFormatOpts, deltaColorClass, cn } from "@/lib/utils";
 
 export function SummaryCards() {
   const { data, isLoading } = useSummary();
@@ -26,7 +26,7 @@ export function SummaryCards() {
 
   const { baseline, best, improvement, most_impactful, stats, metric_columns, metric_hints } = data;
   const primaryMetric = metric_columns[0] ?? null;
-  const pmOpts = primaryMetric ? metricFormatOpts(metric_hints, primaryMetric) : { pct: false, count: false };
+  const pmOpts = primaryMetric ? metricFormatOpts(metric_hints, primaryMetric) : { pct: false, count: false, direction: "minimize" as const };
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -89,9 +89,7 @@ export function SummaryCards() {
               <p
                 className={cn(
                   "font-mono text-3xl font-semibold",
-                  (improvement[primaryMetric] ?? 0) < 0
-                    ? "text-accent-emerald"
-                    : "text-accent-red"
+                  deltaColorClass(improvement[primaryMetric] ?? 0, pmOpts.direction)
                 )}
               >
                 {formatDelta(improvement[primaryMetric], pmOpts)}

@@ -6,7 +6,7 @@ import { parseExperimentLog } from "../services/tsv-parser.js";
 let cachedRowCount = 0;
 
 export function startFileWatcher(projectRoot: string) {
-  const tsvPattern = path.join(projectRoot, "experiment_log*.tsv");
+  const tsvPattern = path.join(projectRoot, ".researchpad", "experiment_log*.tsv");
 
   const tsvWatcher = chokidar.watch(tsvPattern, {
     persistent: true,

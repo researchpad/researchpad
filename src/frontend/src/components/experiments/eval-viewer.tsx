@@ -169,7 +169,7 @@ export function EvalViewer({ experimentId, files, evalDir, dirMissing }: EvalVie
   if (files.length === 0) {
     let message = "No evaluation artifacts found.";
     if (!evalDir) {
-      message += " This experiment has no run_folder recorded.";
+      message += " This experiment has no output_path recorded.";
     } else if (dirMissing) {
       message += ` The run folder (${evalDir}) no longer exists on disk.`;
     } else {

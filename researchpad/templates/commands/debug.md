@@ -18,6 +18,11 @@ Focus area: **$focus**
 
 ## Step 1: Discover Evaluation Artifacts
 
+First, read `RESEARCHPAD.md` in the project root for project-specific
+context including output paths and evaluation details. **If RESEARCHPAD.md
+is missing or has placeholder values, ask the user** for the information
+needed to proceed.
+
 Explore the project to understand how evaluation works:
 
 1. Find where the project computes metrics (evaluation scripts, test
@@ -32,11 +37,11 @@ Explore the project to understand how evaluation works:
 
 Find the latest run directory:
 
-1. Check `experiment_log.tsv` for the most recent experiment with a
-   `run_folder` entry
-2. If no `run_folder` is logged, look for the latest timestamped
+1. Check `.researchpad/experiment_log.tsv` for the most recent experiment with a
+   `output_path` entry
+2. If no `output_path` is logged, look for the latest timestamped
    directory under the storage root (e.g., `data/`)
-3. Verify the run folder exists and contains evaluation outputs
+3. Verify the output path exists and contains evaluation outputs
 
 ## Step 3: Systematic Artifact Review
 
@@ -119,7 +124,7 @@ short URL-friendly description of the pattern (lowercase, hyphens, max
 title: "{target} Debug Summary"
 date: {YYYY-MM-DD}
 analyzed_experiment: {experiment_id}
-analyzed_run_folder: "{path to run folder}"
+analyzed_output_path: "{path to output}"
 status: active
 loop: "{loop label}"
 tags: [summary]
@@ -154,7 +159,7 @@ Each pattern file MUST have this YAML frontmatter format:
 title: "{Specific, descriptive title of THIS pattern}"
 date: {YYYY-MM-DD}
 analyzed_experiment: {experiment_id from the run analyzed}
-analyzed_run_folder: "{path to run folder}"
+analyzed_output_path: "{path to output}"
 status: active
 resolved_by: null
 loop: "{loop label, e.g. forecaster}"

@@ -8,7 +8,7 @@ import { parseExperimentLog, discoverMetricColumns } from "../services/tsv-parse
 export const loopsRouter = new Hono();
 
 loopsRouter.get("/loops", async (c) => {
-  const pattern = path.join(projectRoot, "experiment_log*.tsv");
+  const pattern = path.join(projectRoot, ".researchpad", "experiment_log*.tsv");
   const files = await glob(pattern);
 
   const loops = await Promise.all(
